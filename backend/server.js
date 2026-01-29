@@ -9,45 +9,49 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// --------------------
-// MongoDB Connection
-// --------------------
+// MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected ✅"))
   .catch(err => console.error("DB error ❌", err.message));
 
-// --------------------
-// Stock Model
-// --------------------
+// Stock model
 const Stock = mongoose.model("Stock", new mongoose.Schema({
   name: String,
-  quantity: Number,
-  expiryDays: Number,
+  totalStock: Number,
+  currentStock: Number,
   price: Number,
+  arrivalDate: Date,
+  expiryDate: Date,
 
-  // algorithm outputs
-  status: String,
+  marketValue: Number,
   finalPrice: Number,
+  status: String,
   route: String
 }));
 
-// --------------------
-// Dynamic Pricing Algorithm
-// --------------------
-function applyDynamicPricing(stock) {
+// Dynamic pricing algorithm
+function calculateStockIntelligence(stock) {
+  const today = new Date();
+  const expiry = new Date(stock.expiryDate);
+
+  const diffTime = expiry - today;
+  const daysToExpiry = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  const marketValue = stock.currentStock * stock.price;
+
   let discountRate = 0;
   let status = "Normal";
   let route = "Warehouse";
 
-  if (stock.expiryDays <= 1) {
+  if (daysToExpiry <= 1) {
     discountRate = 0.7;
     status = "Near Expiry";
     route = "Marketplace";
-  } else if (stock.expiryDays <= 3) {
+  } else if (daysToExpiry <= 3) {
     discountRate = 0.5;
     status = "High Discount";
     route = "Marketplace";
-  } else if (stock.expiryDays <= 7) {
+  } else if (daysToExpiry <= 7) {
     discountRate = 0.3;
     status = "Discounted";
     route = "Marketplace";
@@ -55,40 +59,35 @@ function applyDynamicPricing(stock) {
 
   const finalPrice = Math.round(stock.price * (1 - discountRate));
 
-  // auto-donate if value too low
-  if (finalPrice <= stock.price * 0.2) {
+  if (daysToExpiry <= 0 || marketValue < 0.2 * (stock.totalStock * stock.price)) {
     status = "Donate";
     route = "NGO";
   }
 
-  return { status, finalPrice, route };
+  return {
+    daysToExpiry,
+    marketValue,
+    finalPrice,
+    status,
+    route
+  };
 }
 
-// --------------------
 // Routes
-// --------------------
-
-// Test route
 app.get("/", (req, res) => {
   res.send("Server + DB running 🚀");
 });
 
-// GET stock → frontend reads
-app.get("/api/stock", async (req, res) => {
-  const stocks = await Stock.find();
-  res.json(stocks);
-});
-
-// POST stock → form submits
 app.post("/api/stock", async (req, res) => {
   try {
-    const { status, finalPrice, route } = applyDynamicPricing(req.body);
+    const intelligence = calculateStockIntelligence(req.body);
 
     const stock = new Stock({
       ...req.body,
-      status,
-      finalPrice,
-      route
+      marketValue: intelligence.marketValue,
+      finalPrice: intelligence.finalPrice,
+      status: intelligence.status,
+      route: intelligence.route
     });
 
     await stock.save();
@@ -99,7 +98,17 @@ app.post("/api/stock", async (req, res) => {
   }
 });
 
-// --------------------
+app.get("/api/stock", async (req, res) => {
+  const stocks = await Stock.find();
+
+  const updatedStocks = stocks.map(stock => {
+    const intelligence = calculateStockIntelligence(stock);
+    return { ...stock.toObject(), ...intelligence };
+  });
+
+  res.json(updatedStocks);
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

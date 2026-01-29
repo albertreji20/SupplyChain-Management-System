@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Marketplace</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>Surplus Marketplace</h1>
+    <p>Discounted items near expiry</p>
+  </header>
+
+  <main>
+
+    <section style="margin-bottom: 20px;">
+      <a href="index.html">← Back to Dashboard</a>
+    </section>
+
+    <section>
+      <h2>Available Items</h2>
+      <div id="marketplace" class="card-container"></div>
+    </section>
+
+  </main>
+
+  <script>
+    const marketplace = document.getElementById("marketplace");
+
+    fetch("http://localhost:5000/api/stock")
+      .then(res => res.json())
+      .then(items => {
+        items
+          .filter(item => item.route === "Marketplace")
+          .forEach(item => addCard(item));
+      });
+
+    function addCard(item) {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      card.innerHTML = `
+        <h3>${item.name}</h3>
+        <p>Stock Available: ${item.currentStock}</p>
+        <p class="old-price">₹${item.price}</p>
+        <p class="price">₹${item.finalPrice}</p>
+        <p>Status: ${item.status}</p>
+        <button>Buy Now</button>
+      `;
+
+      marketplace.appendChild(card);
+    }
+  </script>
+
+</body>
+</html>

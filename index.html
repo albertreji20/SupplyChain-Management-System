@@ -2,42 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Surplus Marketplace</title>
+  <title>Surplus Dashboard</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <header>
-    <h1>Surplus Reduction Marketplace</h1>
+    <h1>Surplus Reduction Dashboard</h1>
     <p>Predict • Price • Route • Sell</p>
   </header>
 
   <main>
+
+    <!-- Marketplace Navigation -->
+    <section style="margin-bottom: 20px;">
+      <a href="marketplace.html">
+        <button style="padding:10px 16px; cursor:pointer;">
+          🛒 Go to Marketplace
+        </button>
+      </a>
+    </section>
+
+    <!-- Inventory Table -->
     <section>
       <h2>Stock Inventory</h2>
       <table id="stockTable">
         <thead>
           <tr>
             <th>Item</th>
-            <th>Qty</th>
+            <th>Stock</th>
+            <th>Arrival</th>
             <th>Expiry</th>
-            <th>Original Price</th>
+            <th>Days Left</th>
+            <th>Market Value</th>
+            <th>Final Price</th>
             <th>Status</th>
+            <th>Route</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </section>
 
-    <section>
-      <h2>Marketplace (Discounted Items)</h2>
-      <div id="marketplace" class="card-container"></div>
-    </section>
-
+    <!-- Donations -->
     <section>
       <h2>Auto-Routed Donations</h2>
       <ul id="donations"></ul>
     </section>
+
   </main>
 
   <script src="script.js"></script>
