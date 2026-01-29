@@ -1,5 +1,4 @@
 const stockTable = document.querySelector("#stockTable tbody");
-const marketplace = document.getElementById("marketplace");
 const donations = document.getElementById("donations");
 
 fetch("http://localhost:5000/api/stock")
@@ -8,8 +7,9 @@ fetch("http://localhost:5000/api/stock")
     items.forEach(item => {
       addStockRow(item);
 
-      if (item.route === "Marketplace") addToMarketplace(item);
-      if (item.route === "NGO") addDonation(item);
+      if (item.route === "NGO") {
+        addDonation(item);
+      }
     });
   })
   .catch(err => {
@@ -37,22 +37,6 @@ function addStockRow(item) {
   `;
 
   stockTable.appendChild(row);
-}
-
-function addToMarketplace(item) {
-  const card = document.createElement("div");
-  card.className = "card";
-
-  card.innerHTML = `
-    <h3>${item.name}</h3>
-    <p>Stock: ${item.currentStock}</p>
-    <p class="old-price">₹${item.price}</p>
-    <p class="price">₹${item.finalPrice}</p>
-    <p>${item.status}</p>
-    <button>Buy Now</button>
-  `;
-
-  marketplace.appendChild(card);
 }
 
 function addDonation(item) {
