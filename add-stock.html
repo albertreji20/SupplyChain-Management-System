@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Stock</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 40px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      max-width: 420px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    label {
+      font-size: 14px;
+      margin-top: 10px;
+      display: block;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+    }
+
+    button {
+      margin-top: 20px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1e40af;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 15px;
+      text-decoration: none;
+      color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Add Stock to Inventory</h2>
+
+  <form id="stockForm">
+
+    <label>Item Name</label>
+    <input type="text" id="name" placeholder="e.g. Tomatoes" required />
+
+    <label>Total Stock (initial)</label>
+    <input type="number" id="totalStock" placeholder="e.g. 100" required />
+
+    <label>Current Stock (remaining)</label>
+    <input type="number" id="currentStock" placeholder="e.g. 70" required />
+
+    <label>Unit Price (₹)</label>
+    <input type="number" id="price" placeholder="e.g. 40" required />
+
+    <label>Arrival Date (stock entered store)</label>
+    <input type="date" id="arrivalDate" required />
+
+    <label>Expiry Date</label>
+    <input type="date" id="expiryDate" required />
+
+    <button type="submit">Save Stock</button>
+  </form>
+
+  <a href="index.html">⬅ Back to Dashboard</a>
+
+  <script>
+    const form = document.getElementById("stockForm");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const stockData = {
+        name: document.getElementById("name").value,
+        totalStock: Number(document.getElementById("totalStock").value),
+        currentStock: Number(document.getElementById("currentStock").value),
+        price: Number(document.getElementById("price").value),
+        arrivalDate: document.getElementById("arrivalDate").value,
+        expiryDate: document.getElementById("expiryDate").value
+      };
+
+      try {
+        const res = await fetch("http://localhost:5000/api/stock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(stockData)
+        });
+
+        if (!res.ok) throw new Error("Failed");
+
+        alert("Stock added successfully ✅");
+        form.reset();
+
+      } catch (err) {
+        alert("Error adding stock ❌");
+        console.error(err);
+      }
+    });
+  </script>
+
+</body>
+</html>

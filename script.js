@@ -1,51 +1,47 @@
-const stockItems = [
-  { name: "Tomatoes", qty: 100, expiry: 2, price: 40 },
-  { name: "Rice Bags", qty: 50, expiry: 30, price: 1200 },
-  { name: "Milk Packets", qty: 80, expiry: 1, price: 30 },
-  { name: "Apples", qty: 60, expiry: 7, price: 90 }
-];
-
 const stockTable = document.querySelector("#stockTable tbody");
 const marketplace = document.getElementById("marketplace");
 const donations = document.getElementById("donations");
 
-stockItems.forEach(item => {
-  let status = "Normal";
-  let discountedPrice = item.price;
+// Fetch from backend (DB)
+fetch("http://localhost:5000/api/stock")
+  .then(res => res.json())
+  .then(stockItems => {
+    stockItems.forEach(item => {
+      let status = "Normal";
 
-  // Surplus prediction + dynamic pricing
-  if (item.expiry <= 3) {
-    discountedPrice = Math.round(item.price * 0.5);
-    status = "Donate";
-    addDonation(item);
-  } 
-  else if (item.expiry <= 7) {
-    discountedPrice = Math.round(item.price * 0.7);
-    status = "Discounted";
-    addToMarketplace(item, discountedPrice);
-  }
+      if (item.expiryDays <= 3) {
+        status = "Donate";
+        addDonation(item);
+      } 
+      else if (item.expiryDays <= 7) {
+        status = "Discounted";
+        addToMarketplace(item);
+      }
 
-  addStockRow(item, status);
-});
+      addStockRow(item, status);
+    });
+  });
 
 function addStockRow(item, status) {
   const row = document.createElement("tr");
   row.innerHTML = `
     <td>${item.name}</td>
-    <td>${item.qty}</td>
-    <td>${item.expiry} days</td>
+    <td>${item.quantity}</td>
+    <td>${item.expiryDays} days</td>
     <td>₹${item.price}</td>
     <td>${status}</td>
   `;
   stockTable.appendChild(row);
 }
 
-function addToMarketplace(item, discountedPrice) {
+function addToMarketplace(item) {
+  const discountedPrice = Math.round(item.price * 0.7);
+
   const card = document.createElement("div");
   card.className = "card";
   card.innerHTML = `
     <h3>${item.name}</h3>
-    <p>Qty: ${item.qty}</p>
+    <p>Qty: ${item.quantity}</p>
     <p class="old-price">₹${item.price}</p>
     <p class="price">₹${discountedPrice}</p>
     <button>Buy Now</button>
