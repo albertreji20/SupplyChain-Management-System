@@ -6,6 +6,9 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+/* --------------------
+   Middleware
+-------------------- */
 app.use(cors());
 app.use(express.json());
 
@@ -15,30 +18,33 @@ app.use(express.json());
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected ✅"))
-  .catch(err => console.error("DB error ❌", err.message));
+  .catch(err => console.error("MongoDB connection error ❌", err.message));
 
 /* --------------------
-   Stock Model
+   Stock Schema & Model
 -------------------- */
-const Stock = mongoose.model(
-  "Stock",
-  new mongoose.Schema({
-    name: String,
-    totalStock: Number,
-    currentStock: Number,
-    price: Number,
-    arrivalDate: Date,
-    expiryDate: Date,
+const stockSchema = new mongoose.Schema({
+  name: { type: String, required: true },
 
-    marketValue: Number,
-    finalPrice: Number,
-    status: String,
-    route: String
-  })
-);
+  totalStock: { type: Number, required: true },
+  currentStock: { type: Number, required: true },
+
+  price: { type: Number, required: true },
+
+  arrivalDate: { type: Date, required: true },
+  expiryDate: { type: Date, required: true },
+
+  // Computed fields (stored for reference)
+  marketValue: Number,
+  finalPrice: Number,
+  status: String,
+  route: String
+});
+
+const Stock = mongoose.model("Stock", stockSchema);
 
 /* --------------------
-   Dynamic Pricing Algorithm
+   Dynamic Pricing Logic
 -------------------- */
 function calculateStockIntelligence(stock) {
   const today = new Date();
@@ -94,31 +100,53 @@ function calculateStockIntelligence(stock) {
 /* --------------------
    Routes
 -------------------- */
+
+// Health check
 app.get("/", (req, res) => {
   res.send("Server + DB running 🚀");
 });
 
+// Add stock
 app.post("/api/stock", async (req, res) => {
-  const intelligence = calculateStockIntelligence(req.body);
-  const stock = new Stock({ ...req.body, ...intelligence });
-  await stock.save();
-  res.json(stock);
+  try {
+    const intelligence = calculateStockIntelligence(req.body);
+    const stock = new Stock({ ...req.body, ...intelligence });
+    await stock.save();
+    res.status(201).json(stock);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// Get all stock
 app.get("/api/stock", async (req, res) => {
-  const stocks = await Stock.find();
-  const updated = stocks.map(s => ({
-    ...s.toObject(),
-    ...calculateStockIntelligence(s)
-  }));
-  res.json(updated);
+  try {
+    const stocks = await Stock.find();
+
+    const updatedStocks = stocks.map(stock => ({
+      ...stock.toObject(),
+      ...calculateStockIntelligence(stock)
+    }));
+
+    res.json(updatedStocks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// Delete stock
 app.delete("/api/stock/:id", async (req, res) => {
-  await Stock.findByIdAndDelete(req.params.id);
-  res.json({ message: "Stock deleted" });
+  try {
+    await Stock.findByIdAndDelete(req.params.id);
+    res.json({ message: "Stock deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
-);
+/* --------------------
+   Start Server (LAST LINE)
+-------------------- */
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
